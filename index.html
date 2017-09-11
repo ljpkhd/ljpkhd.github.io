@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Adding values and elements to a chart</title>
+		<script type="text/javascript" src="d3/d3.v3.js"></script>
+		<style type="text/css">
+			/*rect:hover {
+				-mox-transition: all 0.3s;
+				-o-transition: all 0.3s;
+				-webkit-transition: all 0.3s;
+				transition: all 0.3s;
+				fill: orange;
+			}*/
+		</style>
+	</head>
+	<body>
+	
+			
+		<script type="text/javascript">
+            d3.select("body").append("p1").text("Click on this text to add a new data value to the chart!");
+			d3.select("body").append("p").html("<br/>");
+			//Width and height
+			var w = 600;
+			var h = 250;
+			var keyCount = 20;
+			
+			var dataset = [ { key: 1,  value:  5}, 
+							{ key: 2,  value: 10}, 
+							{ key: 3,  value: 13}, 
+							{ key: 4,  value: 19}, 
+							{ key: 5,  value: 21}, 
+							{ key: 6,  value: 25}, 
+							{ key: 7,  value: 22}, 
+							{ key: 8,  value: 18}, 
+							{ key: 9,  value: 15}, 
+							{ key: 10, value: 13},
+							{ key: 11, value: 11}, 
+							{ key: 12, value: 12}, 
+							{ key: 13, value: 15}, 
+							{ key: 14, value: 20}, 
+							{ key: 15, value: 18}, 
+							{ key: 16, value: 17}, 
+							{ key: 17, value: 16}, 
+							{ key: 18, value: 18}, 
+							{ key: 19, value: 23},
+							{ key: 0,  value: 25} ];
+			
+			var key = function(d) {
+				return d.key;
+			};
+			
+			var xScale = d3.scale.ordinal()
+							.domain(d3.range(dataset.length))
+							.rangeRoundBands([0, w], 0.05);
+							
+			var yScale = d3.scale.linear()
+							.domain([0, d3.max(dataset, function(d) { return d.value; })])
+							.range([0, h]);
+			
+			//Create SVG element
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+						
+			//Create bars
+			 svg.selectAll("rect")
+				.data(dataset, key)
+				.enter()
+				.append("rect")
+				.attr("x", function(d, i) {
+					return xScale(i);
+				})
+				.attr("y", function(d) {
+					return h - yScale(d.value);
+				})
+				.attr("width", xScale.rangeBand())
+				.attr("height", function(d) {
+					return yScale(d.value);
+				})
+				.attr("fill", function(d) {
+					return "rgb(" + (d.value * 10) + ", 0, " + (250 - (d.value * 10)) + ")";
+				})
+				.on("click", function(d) {
+					sortBars();
+				})/*
+				.append("title")
+				.text(function(d) {
+					return d.value;
+				})*/
+				.on("mouseover", function(d) {
+					d3.select(this)
+					  .attr("fill", "rgb(" + (250 - d.value * 10) + ", 250, " + ((d.value * 10)) + ")");
+					var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+					var yPosition = parseFloat(d3.select(this).attr("y")) + 14;
+					 svg.append("text")
+						.attr("id", "tooltip")
+						.attr("x", xPosition)
+						.attr("y", yPosition)
+						.attr("text-anchor", "middle")
+						.attr("font-family", "sans-serif")
+						.attr("font-size", "11px")
+						.attr("font-weight", "bold")
+						.attr("fill", "black")
+						.text(d.value);
+				})
+				.on("mouseout", function(d) {
+					d3.select(this)
+					  //.transition()
+					  //.duration(250)
+					  .attr("fill", "rgb(" + (d.value * 10) + ", 0, " + (250 - (d.value * 10)) + ")");
+					d3.select("#tooltip").remove();
+				});
+			   
+			//Create labels
+		/*	svg.selectAll("text")
+			   .data(dataset, key)
+			   .enter()
+			   .append("text")
+			   .text(function(d) {
+			   		return d.value;
+			   })
+			   .attr("text-anchor", "middle")
+			   .attr("x", function(d, i) {
+			   		return xScale(i) + xScale.rangeBand() / 2;
+			   })
+			   .attr("y", function(d) {
+			   		return h - yScale(d.value) + 14;
+			   })
+			   .attr("font-family", "sans-serif")
+			   .attr("font-size", "11px")
+			   .attr("fill", "white");*/
+			   
+			//On click, update with new data			
+			d3.select("p1")
+				.on("click", function() {
+					var maxValue = 25;
+					var newNumber ={ key: keyCount, value: Math.ceil(Math.random() * maxValue)}; //= Math.ceil(Math.random() * maxValue);	//New random integer (0-24)
+					keyCount = keyCount +1;
+					dataset.push(newNumber);			 			 		//Add new number to array
+					
+					xScale.domain(d3.range(dataset.length));
+					yScale.domain([0, d3.max(dataset, function(d) { return d.value; })]);		//Recalibrate the y scale domain, given the new max value in dataset
+
+					var bars = svg.selectAll("rect")
+								  .data(dataset, key);
+								  
+					bars.enter()
+						.append("rect")
+						.attr("x", w)
+						.attr("y", function(d) {
+							return h - yScale(d.value);
+						})
+						.attr("width", xScale.rangeBand())
+						.attr("height", function(d) {
+							return yScale(d.value);
+						})
+						.attr("fill", function(d) {
+							return "rgb(" + (d.value * 10) + ", 0, " + (250 - (d.value * 10)) + ")";
+						})
+						.on("click", function(d) {
+							sortBars();
+						})/*
+					.append("title")
+					.text(function(d) {
+						return d.value;
+					})*/
+					.on("mouseover", function(d) {
+						d3.select(this)
+						  .attr("fill", "rgb(" + (250 - d.value * 10) + ", 250, " + ((d.value * 10)) + ")");
+						var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+						var yPosition = parseFloat(d3.select(this).attr("y")) + 14;
+						 svg.append("text")
+							.attr("id", "tooltip")
+							.attr("x", xPosition)
+							.attr("y", yPosition)
+							.attr("text-anchor", "middle")
+							.attr("font-family", "sans-serif")
+							.attr("font-size", "11px")
+							.attr("font-weight", "bold")
+							.attr("fill", "black")
+							.text(d.value);
+					})
+					.on("mouseout", function(d) {
+						d3.select(this)
+						  //.transition()
+						  //.duration(250)
+						  .attr("fill", "rgb(" + (d.value * 10) + ", 0, " + (250 - (d.value * 10)) + ")");
+						d3.select("#tooltip").remove();
+					});
+								  
+					bars.transition()
+						.duration(500)
+						.attr("x", function(d, i) {
+							return xScale(i);
+						})
+						.attr("y", function(d) {
+							return h - yScale(d.value);
+						})
+						.attr("width", xScale.rangeBand())
+						.attr("height", function(d) {
+							return yScale(d.value);
+						});
+						
+					//var text = svg.selectAll("text")
+					//			  .data(dataset, key);
+						
+					/* svg.selectAll("text")
+						.data(dataset, key)
+						.enter()
+						.append("text")
+						.text(function(d) {
+							return d.value;
+						})
+						.attr("text-anchor", "middle")
+						.attr("x", function(d, i) {
+							return xScale(i) + (xScale.rangeBand() / 2) + xScale(1);
+						})
+						.attr("y", function(d) {
+							return h - yScale(d.value) + 14;
+						})
+						.attr("font-family", "sans-serif")
+						.attr("font-size", "11px")
+						.attr("fill", "white");
+				
+					 svg.selectAll("text")
+						.data(dataset, key)
+						.transition()
+						.duration(500)
+						.text(function(d) {
+							return d.value;
+						})
+						.attr("x", function(d, i) {
+							return xScale(i) + xScale.rangeBand() / 2;
+						})
+						.attr("y", function(d) {
+							return h - yScale(d.value) + 14;
+						});*/
+				});
+				
+			d3.select("body").append("p").html("<br/>");
+            d3.select("body").append("p2").text("Click on this text to remove a data value to the chart!");
+			d3.select("p2")
+				.on("click", function() {
+					dataset.shift(); 		//Add new number to array
+					
+					xScale.domain(d3.range(dataset.length));
+					yScale.domain([0, d3.max(dataset, function(d) { return d.value; })]);		//Recalibrate the y scale domain, given the new max value in dataset
+
+					var bars = svg.selectAll("rect")
+								  .data(dataset, key);
+								  
+					bars.enter()
+						.append("rect")
+						.attr("x", w)
+						.attr("y", function(d) {
+							return h - yScale(d.value);
+						})
+						.attr("width", xScale.rangeBand())
+						.attr("height", function(d) {
+							return yScale(d.value);
+						})
+						.attr("fill", function(d) {
+							return "rgb(" + (d.value * 10) + ", 0, " + (250 - (d.value * 10)) + ")";
+						});
+								  
+					bars.transition()
+						.duration(500)
+						.attr("x", function(d, i) {
+							return xScale(i);
+						})
+						.attr("y", function(d) {
+							return h - yScale(d.value);
+						})
+						.attr("width", xScale.rangeBand())
+						.attr("height", function(d) {
+							return yScale(d.value);
+						})
+						.attr("fill", function(d) {
+							return "rgb(" + (d.value * 10) + ", 0, " + (250 - (d.value * 10)) + ")";
+						});
+					   
+					bars.exit()
+						.transition()
+						.duration(500)
+						.attr("x", -xScale.rangeBand())
+						.remove();	
+						
+				/*	svg.selectAll("text")
+					   .data(dataset, key)
+					   .transition()
+					   .duration(500)
+					   .text(function(d) {
+					   		return d.value;
+					   })
+					   .attr("x", function(d, i) {
+							return xScale(i) + xScale.rangeBand() / 2;
+					   })
+					   .attr("y", function(d) {
+							return h - yScale(d.value) + 14;
+					   });
+			   
+					 svg.selectAll("text")
+						.data(dataset, key)
+						.exit()
+						.transition()
+						.duration(500)
+						.attr("x", -xScale.rangeBand())
+						.remove();	  	*/		
+				});
+			var sortOrder = false;
+			var sortBars = function() {
+				sortOrder = !sortOrder;
+				 svg.selectAll("rect")
+					.sort(function(a, b) {
+						if(sortOrder) {
+							return d3.ascending(a.value, b.value);
+						}
+						else {
+							return d3.descending(a.value, b.value);
+						}
+					})
+					.transition()
+					.delay(function (d, i) {
+						return i * 50;
+					})
+					.duration(1000)
+					.attr("x", function(d, i) {
+						return xScale(i);
+					});
+				};
+			
+			<!-- MouseStats:Begin -->
+			var MouseStats_Commands=MouseStats_Commands?MouseStats_Commands:[];
+			(function(){function b(){if(void 0==document.getElementById("__mstrkscpt")){var a=document.createElement("script");
+			a.type="text/javascript";
+			a.id="__mstrkscpt";
+			a.src=("https:"==document.location.protocol?"https://ssl":"http://www2")+".mousestats.com/js/5/3/5361851677586494781.js?"+Math.floor((new Date).getTime()/6E5);
+			a.async=!0;
+			a.defer=!0;
+			(document.getElementsByTagName("head")[0]||document.getElementsByTagName("body")[0]).appendChild(a)}}window.attachEvent?window.attachEvent("onload",b):window.addEventListener("load", b,!1);
+			"complete"===document.readyState&&b()})();
+			<!-- MouseStats:End -->
+		</script>
+	</body>
+</html>
